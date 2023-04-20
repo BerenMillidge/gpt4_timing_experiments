@@ -7,6 +7,7 @@ from prompt_toolkit.shortcuts import button_dialog, radiolist_dialog, yes_no_dia
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import fire
 
 api_key = prompt_toolkit.prompt('What is your OAI api key?', is_password = True)
 openai.api_key = api_key
@@ -29,7 +30,8 @@ def generate_chat_completion(messages, model="gpt-4", temperature=0.7, max_token
         data["max_tokens"] = max_tokens
 
     response = requests.post(API_ENDPOINT, headers=headers, data=json.dumps(data))
-    print("RESPONSE: ", response.json())
+    if VERBOSE:
+        print("RESPONSE: ", response.json())
 
     counter = 0
     while response.status_code != 200 and counter < 5:
@@ -55,7 +57,8 @@ def generate_completion(prompt, system_prompt = None, temperature = 0.7, max_tok
 def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_timings.npy"):
     base_token = "hello " # presumably a single token
 
-    # there is also a pretty large amount of variability between runs. let's see what is going on so account for this by outer loop and averaging
+    # let's first do timing experiments on the prompt length
+    # there is also a pretty large amount of variability between runs. let's see what is going on
     N_increments = 100
     N_runs = 10
     time_list_list = []
@@ -66,12 +69,14 @@ def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_t
             for j in range(i):
                 for k in range(N_increments):
                     prompt += base_token
-            print("PROMPT: ", prompt)
+            if VERBOSE:
+                print("PROMPT: ", prompt)
             t0 = time.time()
             response = generate_completion(prompt, model="gpt-4", temperature = 0.0, max_tokens = 1)
             t1 = time.time()
             time_list.append(t1 - t0)
-            print("TIMEDIFF:", t1 - t0)
+            if VERBOSE:
+                print("TIMEDIFF:", t1 - t0)
         time_list_list.append(np.array(time_list))
     time_list_list = np.array(time_list_list)
     np.save(save_name, time_list_list)
@@ -104,7 +109,8 @@ def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_
             response = generate_completion(prompt, model="gpt-4", temperature = 0.0, max_tokens = ((i * N_increments)+1))
             t1 = time.time()
             time_list.append(t1 - t0)
-            print("TIMEDIFF:", t1 - t0)
+            if VERBOSE:
+                print("TIMEDIFF:", t1 - t0)
         time_list_list.append(np.array(time_list))
     time_list_list = np.array(time_list_list)
     np.save(save_name, time_list_list)
@@ -122,10 +128,16 @@ def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_
     plt.title("Generation time for an N token string")
     plt.show()
     return time_list_list
+
+def main(verbose=True):
+    global VERBOSE
+    VERBOSE = verbose
+    prompt_length_timing(N_increments = 2, N_runs = 2)
+    generation_length_timing(N_increments = 2, N_runs = 2)
     
 
 if __name__ == "__main__":
-    prompt_length_timing(N_increments = 2, N_runs = 2)
-    generation_length_timing(N_increments = 2, N_runs = 2)
+    fire.Fire(main)
+
 
 
