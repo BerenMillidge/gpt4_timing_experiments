@@ -54,13 +54,11 @@ def generate_completion(prompt, system_prompt = None, temperature = 0.7, max_tok
     return response
 
 
-def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_timings.npy"):
+def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_timings",model="gpt-4"):
     base_token = "hello " # presumably a single token
 
     # let's first do timing experiments on the prompt length
     # there is also a pretty large amount of variability between runs. let's see what is going on
-    N_increments = 100
-    N_runs = 10
     time_list_list = []
     for t in range(N_runs):
         time_list = []
@@ -72,14 +70,14 @@ def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_t
             if VERBOSE:
                 print("PROMPT: ", prompt)
             t0 = time.time()
-            response = generate_completion(prompt, model="gpt-4", temperature = 0.0, max_tokens = 1)
+            response = generate_completion(prompt, temperature = 0.0, max_tokens = 1, model=model)
             t1 = time.time()
             time_list.append(t1 - t0)
             if VERBOSE:
                 print("TIMEDIFF:", t1 - t0)
         time_list_list.append(np.array(time_list))
     time_list_list = np.array(time_list_list)
-    np.save(save_name, time_list_list)
+    np.save(save_name + ".npy", time_list_list)
     print(time_list_list)
     mean_time_list = np.mean(time_list_list, axis=0)
     std_time_list = np.std(time_list_list, axis=0)
@@ -92,28 +90,27 @@ def prompt_length_timing(N_increments=100, N_runs=10, save_name="prompt_length_t
     plt.ylabel("Call time (seconds)")
     plt.xlabel("Prompt length tokens (*" + str(N_increments) + ")")
     plt.title("Time to generate a single token against prompt length")
+    plt.savefig(save_name + ".png", format="png")
     plt.show()
     return time_list_list
 
-def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_length_timings.npy"):
+def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_length_timings",model="gpt-4"):
     base_token = "hello " # presumably a single token
 
-    N_increments = 100
-    N_runs = 10
     time_list_list = []
     prompt = "Hello there. Please can you keep repeating the word 'hello' for me for as long as possible. Like so: \nhello hello hello hello hello hello hello hello"
     for t in range(N_runs):
         time_list = []
         for i in range(20):
             t0 = time.time()
-            response = generate_completion(prompt, model="gpt-4", temperature = 0.0, max_tokens = ((i * N_increments)+1))
+            response = generate_completion(prompt, temperature = 0.0, max_tokens = ((i * N_increments)+1), model=model)
             t1 = time.time()
             time_list.append(t1 - t0)
             if VERBOSE:
                 print("TIMEDIFF:", t1 - t0)
         time_list_list.append(np.array(time_list))
     time_list_list = np.array(time_list_list)
-    np.save(save_name, time_list_list)
+    np.save(save_name + ".npy", time_list_list)
     print(time_list_list)
     mean_time_list = np.mean(time_list_list, axis=0)
     std_time_list = np.std(time_list_list, axis=0)
@@ -126,14 +123,15 @@ def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_
     plt.ylabel("Call time (seconds)")
     plt.xlabel("Generation length in tokens (*" + str(N_increments) + ")")
     plt.title("Generation time for an N token string")
+    plt.savefig(save_name + ".png", format="png")
     plt.show()
     return time_list_list
 
 def main(verbose=True):
     global VERBOSE
     VERBOSE = verbose
-    prompt_length_timing(N_increments = 2, N_runs = 2)
-    generation_length_timing(N_increments = 2, N_runs = 2)
+    prompt_length_timing(N_increments = 100, N_runs = 20,model="gpt-3.5-turbo", save_name = "prompt_length_timings_35_turbo")
+    generation_length_timing(N_increments = 100, N_runs = 20,model = "gpt-3.5-turbo",save_name="generation_length_timings_35_turbo")
     
 
 if __name__ == "__main__":
