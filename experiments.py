@@ -104,6 +104,7 @@ def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_
         for i in range(20):
             t0 = time.time()
             response = generate_completion(prompt, temperature = 0.0, max_tokens = ((i * N_increments)+1), model=model)
+            print("Response length: ", len(response))
             t1 = time.time()
             time_list.append(t1 - t0)
             if VERBOSE:
@@ -130,7 +131,7 @@ def generation_length_timing(N_increments=100, N_runs=10, save_name="generation_
 def main(verbose=True):
     global VERBOSE
     VERBOSE = verbose
-    prompt_length_timing(N_increments = 100, N_runs = 20,model="gpt-3.5-turbo", save_name = "prompt_length_timings_35_turbo")
+    #prompt_length_timing(N_increments = 100, N_runs = 20,model="gpt-3.5-turbo", save_name = "prompt_length_timings_35_turbo")
     generation_length_timing(N_increments = 100, N_runs = 20,model = "gpt-3.5-turbo",save_name="generation_length_timings_35_turbo")
     
 
